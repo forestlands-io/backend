@@ -1,4 +1,4 @@
-package io.forestlands.forestlands_backend.entity;
+package io.forestlands.backend.entity;
 
 import jakarta.persistence.*;
 
