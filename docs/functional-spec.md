@@ -35,7 +35,7 @@ MVP is **backend-first** with a single Spring Boot service and MySQL. iOS and We
 - Client selects:
     - **Duration:** 10–120 minutes (UI steps of 5; server enforces only min/max).
     - **Species:** must be unlocked/available to the user at start.
-    - Optional **tag** (≤ 20 chars) for reporting.
+    - Optional **tag** (≤ 30 chars) for reporting.
 - Each session has a **client UUID**; server also has numeric PK.
 - Lifecycle:
     - `session_start` → server stamps `server_start_time`.
@@ -84,7 +84,7 @@ MVP is **backend-first** with a single Spring Boot service and MySQL. iOS and We
     - `reason` (varchar), `ref_type` (varchar), `ref_id` (bigint/uuid)
     - `created_at`
 - `species`
-    - `id` (PK), `uuid` (char(36), unique)
+    - `id` (PK), `uuid` (char(36), unique), `code` (varchar, unique)
     - `name` (varchar), `is_premium` (bool)
     - `price` (int) — interpreted as **soft** if `is_premium=false` else **hard**
     - `is_enabled` (bool), `created_at`, `updated_at`
@@ -92,14 +92,14 @@ MVP is **backend-first** with a single Spring Boot service and MySQL. iOS and We
     - `id` (PK), `user_id` (FK), `species_id` (FK), `unlocked_at`
     - Unique `(user_id, species_id)`
 - `focus_session`
-    - `id` (PK), `uuid` (char(36), unique), `user_id` (FK), `species_id` (FK)
+    - `id` (PK), `uuid` (char(36), unique), `user_id` (FK), `species_code` (FK → `species.code`)
     - `client_start_time`, `client_end_time`
     - `server_start_time`, `server_end_time`
     - `state` enum(`CREATED`,`SUCCESS`,`INTERRUPTED`)
     - `tag` (varchar(20), nullable)
-    - `duration_minutes` (int) — validated server-side
-    - `drift_minutes` (int) — |clientDur - serverDur|
-    - `flags_json` (json) — anomaly notes
+    - `planned_minutes` (int, nullable)
+    - `duration_minutes` (int) — validated server-side (clamped on success)
+    - `flags_json` (json) — anomaly notes (e.g., drift alerts)
     - `created_at`, `updated_at`
 
 ---
@@ -134,14 +134,16 @@ All timestamps are **ISO-8601 UTC**.
       ```json
       {
         "sessionUuid": "...",
-        "speciesUuid": "...",
+        "speciesCode": "red_cherry_2",
         "clientStartTime": "2025-10-24T10:00:00Z",
         "plannedMinutes": 25,
-        "tag": "work"
+        "tag": "Deep Work"
       }
       ```
     - Rules:
         - `plannedMinutes` 10–120 (UI may step 5).
+        - `speciesCode` optional; when present must match `[A-Za-z0-9_]+`.
+        - `tag` optional; when present must match `[A-Za-z0-9 ]+` (max 20 chars).
         - Species must be unlocked or default-available.
     - 201 → `{ "id": 456, "serverStartTime": "..." }`
 - `POST /focus/sessions/{sessionUuid}/end`

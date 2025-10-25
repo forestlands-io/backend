@@ -27,14 +27,14 @@ Implement a clean, testable Spring Boot 3 + MySQL 8 backend that powers:
 - `User(id, uuid, email, passwordHash, createdAt, updatedAt)`
 - `Wallet(id, userId, soft_currency, hard_currency, updatedAt)`
 - `WalletLedger(id, userId, delta_soft_currency, delta_hard_currency, reason, refType, refId, createdAt)`
-- `Species(id, uuid, name, is_premium, price, is_enabled, createdAt, updatedAt)`
+- `Species(id, uuid, code, name, is_premium, price, is_enabled, createdAt, updatedAt)`
 - `UserSpeciesUnlock(id, userId, speciesId, unlockedAt)` unique(userId,speciesId)
-- `FocusSession(id, uuid, userId, speciesId, clientStart, clientEnd, serverStart, serverEnd, state, tag, durationMinutes, driftMinutes, flagsJson, createdAt, updatedAt)`
+- `FocusSession(id, uuid, userId, speciesCode, clientStart, clientEnd, serverStart, serverEnd, state, tag, plannedMinutes, durationMinutes, flagsJson, createdAt, updatedAt)`
 
 ## API Sketch
 - `POST /auth/register`, `POST /auth/login`, reset endpoints.
 - `GET /species`, `POST /species/{uuid}/unlock`
-- `POST /focus/sessions/start` → `{sessionUuid, speciesUuid, clientStartTime, plannedMinutes, tag?}`
+- `POST /focus/sessions/start` → `{sessionUuid, speciesCode?, clientStartTime, plannedMinutes, tag?}`
 - `POST /focus/sessions/{sessionUuid}/end` → `{clientEndTime, state}` → awards `soft_currency` on success.
 - `GET /focus/sessions?limit&cursor`
 - `GET /wallet`, `GET /wallet/ledger?limit&cursor`
@@ -42,7 +42,8 @@ Implement a clean, testable Spring Boot 3 + MySQL 8 backend that powers:
 ## Implementation Notes
 - **Time:** store UTC; use `Instant`.
 - **IDs:** client `sessionUuid` is idempotency key; validate UUID.
-- **Validation:** clamp to [5,120]; compute drift = |clientDur - serverDur|.
+- **Validation:** clamp to [5,120]; enforce drift tolerance of ±3 minutes (not persisted).
+- **Input Sanitization:** `speciesCode` accepts only alphanumeric + underscore; `tag` limited to alphanumeric + spaces (≤20 chars).
 - **Auth:** JWT (short TTL), bcrypt/argon2id for passwords.
 - **Ledger:** every wallet mutation must include `reason` and reference (type+id).
 - **Migrations:** Flyway baseline + seeds for species; admin/test endpoints to grant `hard_currency`.

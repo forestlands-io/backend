@@ -14,11 +14,13 @@ CREATE TABLE species (
     creation_date DATETIME(6) NOT NULL,
     last_modified_date DATETIME(6),
     uuid CHAR(36) NOT NULL,
+    code VARCHAR(64) NOT NULL,
     name VARCHAR(100) NOT NULL,
     is_premium TINYINT(1) NOT NULL,
     price INT NOT NULL,
     is_enabled TINYINT(1) NOT NULL,
-    CONSTRAINT uq_species_uuid UNIQUE (uuid)
+    CONSTRAINT uq_species_uuid UNIQUE (uuid),
+    CONSTRAINT uq_species_code UNIQUE (code)
 ) ENGINE=InnoDB;
 
 CREATE TABLE wallets (
@@ -53,15 +55,15 @@ CREATE TABLE focus_sessions (
     last_modified_date DATETIME(6),
     uuid CHAR(36) NOT NULL,
     user_id BIGINT NOT NULL,
-    species_id BIGINT,
+    species_id BIGINT NOT NULL,
     client_start_time DATETIME(6) NOT NULL,
     client_end_time DATETIME(6),
     server_start_time DATETIME(6) NOT NULL,
     server_end_time DATETIME(6),
     state VARCHAR(20) NOT NULL,
     tag VARCHAR(20),
+    planned_minutes INT,
     duration_minutes INT,
-    drift_minutes INT,
     flags_json TEXT,
     CONSTRAINT uq_focus_sessions_uuid UNIQUE (uuid),
     CONSTRAINT fk_focus_sessions_user FOREIGN KEY (user_id) REFERENCES users (id),

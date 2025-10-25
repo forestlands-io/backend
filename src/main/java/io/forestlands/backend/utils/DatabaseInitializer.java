@@ -1,6 +1,8 @@
 package io.forestlands.backend.utils;
 
+import io.forestlands.backend.entity.Species;
 import io.forestlands.backend.entity.User;
+import io.forestlands.backend.service.SpeciesService;
 import io.forestlands.backend.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,15 +15,35 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer implements CommandLineRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseInitializer.class);
     private final UserService userService;
+    private final SpeciesService speciesService;
 
-    public DatabaseInitializer(UserService userService) {
+    public DatabaseInitializer(UserService userService, SpeciesService speciesService) {
         this.userService = userService;
+        this.speciesService = speciesService;
     }
 
     @Override
     public void run(String... args) throws Exception {
-        User user = userService.createUser("user@mail.com", "123");
+        if (userService.findByEmail("user@mail.com").isPresent()) {
+            LOGGER.info("Database already initialized");
+            return;
+        }
+
+        LOGGER.info("Initializing database");
+        userService.createUser("user@mail.com", "123");
+        createSpecies("cherry", "Cherry", false, 100);
+        createSpecies("oak", "Oak", false, 200);
+        createSpecies("rose", "Rose", true, 5);
         LOGGER.info("Done initializing database");
-        System.exit(0);
+        // System.exit(0);
+    }
+
+    private Species createSpecies(String code, String name, boolean premium, int price) {
+        Species species = new Species();
+        species.setCode(code);
+        species.setName(name);
+        species.setPremium(premium);
+        species.setPrice(price);
+        return speciesService.save(species);
     }
 }

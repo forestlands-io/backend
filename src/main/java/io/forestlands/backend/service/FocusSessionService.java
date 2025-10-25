@@ -53,7 +53,7 @@ public class FocusSessionService {
     @Transactional
     public FocusSessionStartResult startSession(User user,
                                                 UUID sessionUuid,
-                                                UUID speciesUuid,
+                                                String speciesCode,
                                                 Instant clientStartTime,
                                                 Integer plannedMinutes,
                                                 String tag) {
@@ -77,9 +77,9 @@ public class FocusSessionService {
         });
 
         Species species = null;
-        if (speciesUuid != null) {
+        if (speciesCode != null) {
             species = speciesService
-                    .findByUuid(speciesUuid)
+                    .findByCode(speciesCode)
                     .orElseThrow(() -> new IllegalArgumentException("Species not found"));
         }
 
@@ -90,6 +90,7 @@ public class FocusSessionService {
         session.setClientStartTime(clientStartTime);
         session.setServerStartTime(Instant.now());
         session.setTag(tag);
+        session.setPlannedMinutes(plannedMinutes);
         session.setState(FocusSessionState.CREATED);
 
         FocusSession saved = focusSessionRepository.save(session);
@@ -116,8 +117,11 @@ public class FocusSessionService {
             Wallet wallet = walletService.getOrCreate(user);
             int validated = session.getDurationMinutes() == null ? 0 : session.getDurationMinutes();
             int awarded = session.getState() == FocusSessionState.SUCCESS ? validated : 0;
-            List<String> anomalies = deserializeFlags(session.getFlagsJson());
-            return new FocusSessionCompletionResult(session, validated, awarded, anomalies, wallet);
+            return new FocusSessionCompletionResult(session, validated, awarded, wallet);
+        }
+
+        if (newState == FocusSessionState.SUCCESS && clientEndTime == null) {
+            throw new IllegalArgumentException("clientEndTime is required for successful sessions");
         }
 
         Instant serverEndTime = Instant.now();
@@ -141,7 +145,9 @@ public class FocusSessionService {
         int drift = Math.toIntExact(Math.abs(clientDurationMinutes - serverDurationMinutes));
 
         List<String> anomalies = new ArrayList<>();
-        int validatedMinutes = (int) Math.min(Math.max(serverDurationMinutes, 5), 120);
+        if (drift > 0) {
+            anomalies.add("DRIFT_" + drift + "M");
+        }
 
         if (newState == FocusSessionState.SUCCESS) {
             if (serverDurationMinutes < 5) {
@@ -153,22 +159,23 @@ public class FocusSessionService {
             if (serverDurationMinutes > 120) {
                 anomalies.add("SERVER_DURATION_CLAMPED");
             }
+            int validatedMinutes = (int) Math.min(Math.max(serverDurationMinutes, 5), 120);
             session.setDurationMinutes(validatedMinutes);
         } else {
             session.setDurationMinutes((int) serverDurationMinutes);
         }
 
-        session.setDriftMinutes(drift);
         session.setFlagsJson(writeFlags(anomalies));
 
         Wallet wallet = null;
         int softAwarded = 0;
         if (newState == FocusSessionState.SUCCESS) {
-            softAwarded = validatedMinutes;
-            wallet = walletService.adjustBalance(user, validatedMinutes, 0);
+            int rewardMinutes = session.getDurationMinutes();
+            softAwarded = rewardMinutes;
+            wallet = walletService.adjustBalance(user, rewardMinutes, 0);
             walletLedgerService.recordEntry(
                     user,
-                    validatedMinutes,
+                    rewardMinutes,
                     0,
                     "FOCUS_REWARD",
                     "FOCUS_SESSION",
@@ -179,7 +186,12 @@ public class FocusSessionService {
         }
 
         FocusSession saved = focusSessionRepository.save(session);
-        return new FocusSessionCompletionResult(saved, session.getDurationMinutes(), softAwarded, anomalies, wallet);
+        return new FocusSessionCompletionResult(
+                saved,
+                session.getDurationMinutes() == null ? 0 : session.getDurationMinutes(),
+                softAwarded,
+                wallet
+        );
     }
 
     private String writeFlags(List<String> anomalies) {
@@ -193,17 +205,6 @@ public class FocusSessionService {
         }
     }
 
-    private List<String> deserializeFlags(String json) {
-        if (json == null || json.isBlank()) {
-            return Collections.emptyList();
-        }
-        try {
-            return objectMapper.readValue(json, objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
-        } catch (JsonProcessingException ex) {
-            return Collections.emptyList();
-        }
-    }
-
     public record FocusSessionStartResult(FocusSession session, boolean created) {
     }
 
@@ -211,7 +212,6 @@ public class FocusSessionService {
             FocusSession session,
             int validatedMinutes,
             int softCurrencyAwarded,
-            List<String> anomalies,
             Wallet wallet
     ) {
     }

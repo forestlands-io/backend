@@ -41,3 +41,8 @@ GRANT ALL PRIVILEGES ON `forestlands`.* TO 'forestlands'@'%';
 ```
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
+For testing you can also use the `init-db` profile, which seeds database with initial data:
+```
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local,init-db
+```

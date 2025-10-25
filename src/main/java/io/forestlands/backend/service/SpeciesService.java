@@ -24,14 +24,17 @@ public class SpeciesService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Species> findByUuid(UUID uuid) {
-        return speciesRepository.findByUuid(uuid);
+    public Optional<Species> findByCode(String speciesCode) {
+        return speciesRepository.findByCode(speciesCode);
     }
 
     @Transactional
     public Species save(Species species) {
         if (species.getUuid() == null) {
             species.setUuid(UUID.randomUUID());
+        }
+        if (species.getCode() == null || species.getCode().isBlank()) {
+            throw new IllegalArgumentException("Species code is required");
         }
         return speciesRepository.save(species);
     }

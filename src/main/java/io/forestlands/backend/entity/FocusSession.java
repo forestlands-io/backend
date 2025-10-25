@@ -27,7 +27,7 @@ public class FocusSession extends BaseEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "species_id")
+    @JoinColumn(name = "species_id", nullable = false)
     private Species species;
 
     @Column(name = "client_start_time", nullable = false)
@@ -52,8 +52,8 @@ public class FocusSession extends BaseEntity {
     @Column(name = "duration_minutes")
     private Integer durationMinutes;
 
-    @Column(name = "drift_minutes")
-    private Integer driftMinutes;
+    @Column(name = "planned_minutes")
+    private Integer plannedMinutes;
 
     @Column(name = "flags_json", columnDefinition = "TEXT")
     private String flagsJson;
@@ -138,12 +138,12 @@ public class FocusSession extends BaseEntity {
         this.durationMinutes = durationMinutes;
     }
 
-    public Integer getDriftMinutes() {
-        return driftMinutes;
+    public Integer getPlannedMinutes() {
+        return plannedMinutes;
     }
 
-    public void setDriftMinutes(Integer driftMinutes) {
-        this.driftMinutes = driftMinutes;
+    public void setPlannedMinutes(Integer plannedMinutes) {
+        this.plannedMinutes = plannedMinutes;
     }
 
     public String getFlagsJson() {

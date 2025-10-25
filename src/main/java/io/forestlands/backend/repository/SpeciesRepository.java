@@ -5,11 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface SpeciesRepository extends JpaRepository<Species, Long> {
 
-    Optional<Species> findByUuid(UUID uuid);
+    Optional<Species> findByCode(String speciesCode);
 
     List<Species> findAllByEnabledTrueOrderByNameAsc();
 }

@@ -8,8 +8,7 @@ public record CompleteFocusSessionResponse(
         FocusSessionState state,
         int validatedMinutes,
         int softCurrencyAwarded,
-        WalletSummary wallet,
-        List<String> anomalies
+        WalletSummary wallet
 ) {
     public record WalletSummary(int softCurrency, int hardCurrency) {
     }

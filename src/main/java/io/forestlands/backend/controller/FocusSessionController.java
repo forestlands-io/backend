@@ -11,6 +11,7 @@ import io.forestlands.backend.service.FocusSessionService;
 import io.forestlands.backend.service.FocusSessionService.FocusSessionCompletionResult;
 import io.forestlands.backend.service.FocusSessionService.FocusSessionStartResult;
 import io.forestlands.backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,14 +38,14 @@ public class FocusSessionController {
     }
 
     @PostMapping("/start")
-    public ResponseEntity<StartFocusSessionResponse> startSession(@RequestBody StartFocusSessionRequest request,
+    public ResponseEntity<StartFocusSessionResponse> startSession(@Valid @RequestBody StartFocusSessionRequest request,
                                                                   Authentication authentication) {
         User user = resolveUser(authentication);
         try {
             FocusSessionStartResult result = focusSessionService.startSession(
                     user,
                     request.sessionUuid(),
-                    request.speciesUuid(),
+                    request.speciesCode(),
                     request.clientStartTime(),
                     request.plannedMinutes(),
                     request.tag()
@@ -67,7 +68,7 @@ public class FocusSessionController {
 
     @PostMapping("/{sessionUuid}/end")
     public ResponseEntity<CompleteFocusSessionResponse> completeSession(@PathVariable UUID sessionUuid,
-                                                                        @RequestBody CompleteFocusSessionRequest request,
+                                                                        @Valid @RequestBody CompleteFocusSessionRequest request,
                                                                         Authentication authentication) {
         User user = resolveUser(authentication);
         try {
@@ -82,8 +83,7 @@ public class FocusSessionController {
                     result.session().getState(),
                     result.validatedMinutes(),
                     result.softCurrencyAwarded(),
-                    new WalletSummary(result.wallet().getSoftCurrency(), result.wallet().getHardCurrency()),
-                    result.anomalies() == null ? List.of() : result.anomalies()
+                    new WalletSummary(result.wallet().getSoftCurrency(), result.wallet().getHardCurrency())
             );
 
             return ResponseEntity.ok(response);
