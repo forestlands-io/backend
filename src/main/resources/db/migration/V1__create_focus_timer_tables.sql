@@ -19,6 +19,7 @@ CREATE TABLE species (
     is_premium TINYINT(1) NOT NULL,
     price INT NOT NULL,
     is_enabled TINYINT(1) NOT NULL,
+    default_available TINYINT(1) NOT NULL DEFAULT 0,
     CONSTRAINT uq_species_uuid UNIQUE (uuid),
     CONSTRAINT uq_species_code UNIQUE (code)
 ) ENGINE=InnoDB;
@@ -72,3 +73,22 @@ CREATE TABLE focus_sessions (
 
 CREATE INDEX idx_focus_sessions_user ON focus_sessions (user_id, creation_date DESC);
 CREATE INDEX idx_focus_sessions_species ON focus_sessions (species_id);
+
+CREATE TABLE user_species_unlocks (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    creation_date DATETIME(6) NOT NULL,
+    last_modified_date DATETIME(6),
+    user_id BIGINT NOT NULL,
+    species_id BIGINT NOT NULL,
+    unlocked_at DATETIME(6) NOT NULL,
+    method VARCHAR(20) NOT NULL,
+    price_paid INT NOT NULL,
+    currency_type VARCHAR(10) NOT NULL,
+    notes VARCHAR(255),
+    CONSTRAINT fk_user_species_unlock_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_user_species_unlock_species FOREIGN KEY (species_id) REFERENCES species (id),
+    CONSTRAINT uq_user_species_unlock UNIQUE (user_id, species_id)
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_user_species_unlock_user ON user_species_unlocks (user_id);
+CREATE INDEX idx_user_species_unlock_species ON user_species_unlocks (species_id);

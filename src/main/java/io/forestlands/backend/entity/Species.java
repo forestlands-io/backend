@@ -31,6 +31,9 @@ public class Species extends BaseEntity {
     @Column(name = "is_enabled", nullable = false)
     private boolean enabled = true;
 
+    @Column(name = "default_available", nullable = false)
+    private boolean defaultAvailable = false;
+
     public UUID getUuid() {
         return uuid;
     }
@@ -77,5 +80,13 @@ public class Species extends BaseEntity {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isDefaultAvailable() {
+        return defaultAvailable;
+    }
+
+    public void setDefaultAvailable(boolean defaultAvailable) {
+        this.defaultAvailable = defaultAvailable;
     }
 }

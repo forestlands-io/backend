@@ -87,12 +87,15 @@ MVP is **backend-first** with a single Spring Boot service and MySQL. iOS and We
     - `id` (PK), `uuid` (char(36), unique), `code` (varchar, unique)
     - `name` (varchar), `is_premium` (bool)
     - `price` (int) — interpreted as **soft** if `is_premium=false` else **hard**
-    - `is_enabled` (bool), `created_at`, `updated_at`
+    - `is_enabled` (bool), `default_available` (bool)
+    - `created_at`, `updated_at`
 - `user_species_unlock`
-    - `id` (PK), `user_id` (FK), `species_id` (FK), `unlocked_at`
-    - Unique `(user_id, species_id)`
+    - `id` (PK), `user_id` (FK), `species_id` (FK)
+    - `unlocked_at` (datetime), `method` enum(`SOFT_CURRENCY`,`HARD_CURRENCY`,`ADMIN_GRANT`,`TEST_GRANT`)
+    - `price_paid` (int), `currency_type` enum(`SOFT`,`HARD`,`NONE`), `notes` (varchar, nullable)
+    - Unique `(user_id, species_id)`; index on `user_id`, `species_id`
 - `focus_session`
-    - `id` (PK), `uuid` (char(36), unique), `user_id` (FK), `species_code` (FK → `species.code`)
+    - `id` (PK), `uuid` (char(36), unique), `user_id` (FK), `species_id` (FK → `species.id`)
     - `client_start_time`, `client_end_time`
     - `server_start_time`, `server_end_time`
     - `state` enum(`CREATED`,`SUCCESS`,`INTERRUPTED`)
@@ -142,7 +145,7 @@ All timestamps are **ISO-8601 UTC**.
       ```
     - Rules:
         - `plannedMinutes` 10–120 (UI may step 5).
-        - `speciesCode` optional; when present must match `[A-Za-z0-9_]+`.
+        - `speciesCode` optional; when present must match `[A-Za-z0-9_]+` and refer to an enabled species unlocked by the user (unless `default_available`).
         - `tag` optional; when present must match `[A-Za-z0-9 ]+` (max 20 chars).
         - Species must be unlocked or default-available.
     - 201 → `{ "id": 456, "serverStartTime": "..." }`

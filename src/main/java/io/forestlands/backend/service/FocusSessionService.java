@@ -26,17 +26,20 @@ public class FocusSessionService {
     private final SpeciesService speciesService;
     private final WalletService walletService;
     private final WalletLedgerService walletLedgerService;
+    private final UserSpeciesUnlockService userSpeciesUnlockService;
     private final ObjectMapper objectMapper;
 
     public FocusSessionService(FocusSessionRepository focusSessionRepository,
                                SpeciesService speciesService,
                                WalletService walletService,
                                WalletLedgerService walletLedgerService,
+                               UserSpeciesUnlockService userSpeciesUnlockService,
                                ObjectMapper objectMapper) {
         this.focusSessionRepository = focusSessionRepository;
         this.speciesService = speciesService;
         this.walletService = walletService;
         this.walletLedgerService = walletLedgerService;
+        this.userSpeciesUnlockService = userSpeciesUnlockService;
         this.objectMapper = objectMapper;
     }
 
@@ -81,6 +84,9 @@ public class FocusSessionService {
             species = speciesService
                     .findByCode(speciesCode)
                     .orElseThrow(() -> new IllegalArgumentException("Species not found"));
+            if (!userSpeciesUnlockService.isSpeciesUsable(user, species)) {
+                throw new IllegalArgumentException("Species is not available to this user");
+            }
         }
 
         FocusSession session = new FocusSession();

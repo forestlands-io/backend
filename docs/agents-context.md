@@ -27,9 +27,9 @@ Implement a clean, testable Spring Boot 3 + MySQL 8 backend that powers:
 - `User(id, uuid, email, passwordHash, createdAt, updatedAt)`
 - `Wallet(id, userId, soft_currency, hard_currency, updatedAt)`
 - `WalletLedger(id, userId, delta_soft_currency, delta_hard_currency, reason, refType, refId, createdAt)`
-- `Species(id, uuid, code, name, is_premium, price, is_enabled, createdAt, updatedAt)`
-- `UserSpeciesUnlock(id, userId, speciesId, unlockedAt)` unique(userId,speciesId)
-- `FocusSession(id, uuid, userId, speciesCode, clientStart, clientEnd, serverStart, serverEnd, state, tag, plannedMinutes, durationMinutes, flagsJson, createdAt, updatedAt)`
+- `Species(id, uuid, code, name, is_premium, price, is_enabled, defaultAvailable, createdAt, updatedAt)`
+- `UserSpeciesUnlock(id, userId, speciesId, unlockedAt, method, pricePaid, currencyType, notes)` unique(userId,speciesId)
+- `FocusSession(id, uuid, userId, speciesId, clientStart, clientEnd, serverStart, serverEnd, state, tag, plannedMinutes, durationMinutes, flagsJson, createdAt, updatedAt)`
 
 ## API Sketch
 - `POST /auth/register`, `POST /auth/login`, reset endpoints.
@@ -44,6 +44,7 @@ Implement a clean, testable Spring Boot 3 + MySQL 8 backend that powers:
 - **IDs:** client `sessionUuid` is idempotency key; validate UUID.
 - **Validation:** clamp to [5,120]; enforce drift tolerance of ±3 minutes (not persisted).
 - **Input Sanitization:** `speciesCode` accepts only alphanumeric + underscore; `tag` limited to alphanumeric + spaces (≤20 chars).
+- **Species Access:** enforce `enabled` flag and require unlock unless `defaultAvailable = true`.
 - **Auth:** JWT (short TTL), bcrypt/argon2id for passwords.
 - **Ledger:** every wallet mutation must include `reason` and reference (type+id).
 - **Migrations:** Flyway baseline + seeds for species; admin/test endpoints to grant `hard_currency`.
