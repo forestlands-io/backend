@@ -27,7 +27,7 @@ public class FocusSession extends BaseEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "species_id")
+    @JoinColumn(name = "species_id", nullable = false)
     private Species species;
 
     @Column(name = "client_start_time", nullable = false)
