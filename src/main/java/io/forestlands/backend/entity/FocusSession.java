@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "focus_sessions")
+@Table(name = "focus_session")
 public class FocusSession extends BaseEntity {
 
     @JdbcTypeCode(SqlTypes.CHAR)

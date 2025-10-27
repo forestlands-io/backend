@@ -8,7 +8,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "wallets")
+@Table(name = "wallet")
 public class Wallet extends BaseEntity {
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)

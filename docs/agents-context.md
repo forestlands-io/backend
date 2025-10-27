@@ -24,12 +24,12 @@ Implement a clean, testable Spring Boot 3 + MySQL 8 backend that powers:
     - if `true` → cost in `hard_currency`
 
 ## Entities
-- `User(id, uuid, email, passwordHash, createdAt, updatedAt)`
-- `Wallet(id, userId, soft_currency, hard_currency, updatedAt)`
-- `WalletLedger(id, userId, delta_soft_currency, delta_hard_currency, reason, refType, refId, createdAt)`
-- `Species(id, uuid, code, name, is_premium, price, is_enabled, defaultAvailable, createdAt, updatedAt)`
-- `UserSpeciesUnlock(id, userId, speciesId, unlockedAt, method, pricePaid, currencyType, notes)` unique(userId,speciesId)
-- `FocusSession(id, uuid, userId, speciesId, clientStart, clientEnd, serverStart, serverEnd, state, tag, plannedMinutes, durationMinutes, flagsJson, createdAt, updatedAt)`
+- `User(id, creation_date, last_modified_date, uuid, email, passwordHash)`
+- `Wallet(id, creation_date, last_modified_date, userId, soft_currency, hard_currency)`
+- `WalletLedger(id, creation_date, last_modified_date, userId, delta_soft_currency, delta_hard_currency, reason, refType, refId)`
+- `Species(id, creation_date, last_modified_date, uuid, code, name, is_premium, price, is_enabled, default_available)`
+- `UserSpeciesUnlock(id, creation_date, last_modified_date, userId, speciesId, unlocked_at, method, price_paid, currencyType, notes)` unique(userId,speciesId)
+- `FocusSession(id, creation_date, last_modified_date, uuid, userId, speciesId, clientStart, clientEnd, serverStart, serverEnd, state, tag, plannedMinutes, durationMinutes, flagsJson)`
 
 ## API Sketch
 - `POST /auth/register`, `POST /auth/login`, reset endpoints.

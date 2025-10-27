@@ -9,7 +9,7 @@ import org.hibernate.type.SqlTypes;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "user")
 public class User extends BaseEntity {
 
     @JdbcTypeCode(SqlTypes.CHAR)

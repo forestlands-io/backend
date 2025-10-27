@@ -1,12 +1,12 @@
-CREATE TABLE users (
+CREATE TABLE `user` (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     creation_date DATETIME(6) NOT NULL,
     last_modified_date DATETIME(6),
     uuid CHAR(36) NOT NULL,
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    CONSTRAINT uq_users_uuid UNIQUE (uuid),
-    CONSTRAINT uq_users_email UNIQUE (email)
+    CONSTRAINT uq_user_uuid UNIQUE (uuid),
+    CONSTRAINT uq_user_email UNIQUE (email)
 ) ENGINE=InnoDB;
 
 CREATE TABLE species (
@@ -24,15 +24,15 @@ CREATE TABLE species (
     CONSTRAINT uq_species_code UNIQUE (code)
 ) ENGINE=InnoDB;
 
-CREATE TABLE wallets (
+CREATE TABLE wallet (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     creation_date DATETIME(6) NOT NULL,
     last_modified_date DATETIME(6),
     user_id BIGINT NOT NULL,
     soft_currency INT NOT NULL DEFAULT 0,
     hard_currency INT NOT NULL DEFAULT 0,
-    CONSTRAINT uq_wallets_user_id UNIQUE (user_id),
-    CONSTRAINT fk_wallets_user FOREIGN KEY (user_id) REFERENCES users (id)
+    CONSTRAINT uq_wallet_user_id UNIQUE (user_id),
+    CONSTRAINT fk_wallet_user FOREIGN KEY (user_id) REFERENCES `user` (id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE wallet_ledger (
@@ -45,12 +45,12 @@ CREATE TABLE wallet_ledger (
     reason VARCHAR(50) NOT NULL,
     ref_type VARCHAR(50) NOT NULL,
     ref_id VARCHAR(100) NOT NULL,
-    CONSTRAINT fk_wallet_ledger_user FOREIGN KEY (user_id) REFERENCES users (id)
+    CONSTRAINT fk_wallet_ledger_user FOREIGN KEY (user_id) REFERENCES `user` (id)
 ) ENGINE=InnoDB;
 
 CREATE INDEX idx_wallet_ledger_user ON wallet_ledger (user_id);
 
-CREATE TABLE focus_sessions (
+CREATE TABLE focus_session (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     creation_date DATETIME(6) NOT NULL,
     last_modified_date DATETIME(6),
@@ -66,15 +66,15 @@ CREATE TABLE focus_sessions (
     planned_minutes INT,
     duration_minutes INT,
     flags_json TEXT,
-    CONSTRAINT uq_focus_sessions_uuid UNIQUE (uuid),
-    CONSTRAINT fk_focus_sessions_user FOREIGN KEY (user_id) REFERENCES users (id),
-    CONSTRAINT fk_focus_sessions_species FOREIGN KEY (species_id) REFERENCES species (id)
+    CONSTRAINT uq_focus_session_uuid UNIQUE (uuid),
+    CONSTRAINT fk_focus_session_user FOREIGN KEY (user_id) REFERENCES `user` (id),
+    CONSTRAINT fk_focus_session_species FOREIGN KEY (species_id) REFERENCES species (id)
 ) ENGINE=InnoDB;
 
-CREATE INDEX idx_focus_sessions_user ON focus_sessions (user_id, creation_date DESC);
-CREATE INDEX idx_focus_sessions_species ON focus_sessions (species_id);
+CREATE INDEX idx_focus_session_user ON focus_session (user_id, creation_date DESC);
+CREATE INDEX idx_focus_session_species ON focus_session (species_id);
 
-CREATE TABLE user_species_unlocks (
+CREATE TABLE user_species_unlock (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     creation_date DATETIME(6) NOT NULL,
     last_modified_date DATETIME(6),
@@ -85,10 +85,10 @@ CREATE TABLE user_species_unlocks (
     price_paid INT NOT NULL,
     currency_type VARCHAR(10) NOT NULL,
     notes VARCHAR(255),
-    CONSTRAINT fk_user_species_unlock_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_user_species_unlock_user FOREIGN KEY (user_id) REFERENCES `user` (id),
     CONSTRAINT fk_user_species_unlock_species FOREIGN KEY (species_id) REFERENCES species (id),
     CONSTRAINT uq_user_species_unlock UNIQUE (user_id, species_id)
 ) ENGINE=InnoDB;
 
-CREATE INDEX idx_user_species_unlock_user ON user_species_unlocks (user_id);
-CREATE INDEX idx_user_species_unlock_species ON user_species_unlocks (species_id);
+CREATE INDEX idx_user_species_unlock_user ON user_species_unlock (user_id);
+CREATE INDEX idx_user_species_unlock_species ON user_species_unlock (species_id);
