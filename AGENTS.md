@@ -7,9 +7,10 @@ This document tells AI assistants how to operate inside the **Forestlands Backen
 Implement and evolve the **Forestlands** backend according to the functional spec while keeping the codebase simple, testable, and aligned with the MVP roadmap.
 
 **Primary sources of truth (read first):**
-- `/docs/functional-spec.md` — user-facing requirements (MVP vs post-MVP).
-- `/docs/agents-context.md` — condensed, always-current summary for agents (entities, rules).
-- `/README.md` — setup and dev conventions.
+- `/docs/functional-spec.md` - user-facing requirements (MVP vs post-MVP).
+- `/docs/agents-context.md` - condensed, always-current summary for agents (entities, rules).
+- `/docs/openapi.json` - current API spec, will be shared with frontend
+- `/README.md` - setup and dev conventions.
 
 > If these documents disagree, prefer `/docs/functional-spec.md`. Propose a fix via PR that updates both files consistently.
 
@@ -34,7 +35,7 @@ Implement and evolve the **Forestlands** backend according to the functional spe
 - **Validation**: Bean Validation (`jakarta.validation`) on request DTOs; fail fast with meaningful messages.
 - **Transactions**: service layer boundaries; never in controllers.
 - **Errors**: centralized `@ControllerAdvice`; payload: `{ timestamp, path, code, message, details? }`.
-- **Security**: Spring Security with JWT filter; BCrypt password encoder.
+- **Security**: Spring Security with JWT filter; Argon2 password encoder.
 - **Testing**: JUnit 5; Repository tests with Testcontainers (MySQL); Service tests use mocks; Controller tests with `@WebMvcTest`.
 
 ---
@@ -48,8 +49,9 @@ Implement and evolve the **Forestlands** backend according to the functional spe
 
 ## Logging & Audit
 
+- Always add logger into services (private static final Logger LOGGER = LoggerFactory.getLogger(ClassName.class);)
 - Log all important events (e.g. user login, session start, species purchase).
-- Use a **WalletTransaction** table to record every coins/crystals change.
+- Use a **WalletLedger** table to record every coins/crystals change.
 
 ---
 

@@ -23,32 +23,16 @@ Implement a clean, testable Spring Boot 3 + MySQL 8 backend that powers:
     - if `false` → cost in `soft_currency`
     - if `true` → cost in `hard_currency`
 
-## Entities
-- `User(id, creation_date, last_modified_date, uuid, email, passwordHash)`
-- `Wallet(id, creation_date, last_modified_date, userId, soft_currency, hard_currency)`
-- `WalletLedger(id, creation_date, last_modified_date, userId, delta_soft_currency, delta_hard_currency, reason, refType, refId)`
-- `Species(id, creation_date, last_modified_date, uuid, code, name, is_premium, price, is_enabled, default_available)`
-- `UserSpeciesUnlock(id, creation_date, last_modified_date, userId, speciesId, unlocked_at, method, price_paid, currencyType, notes)` unique(userId,speciesId)
-- `FocusSession(id, creation_date, last_modified_date, uuid, userId, speciesId, clientStart, clientEnd, serverStart, serverEnd, state, tag, plannedMinutes, durationMinutes, flagsJson)`
-
-## API Sketch
-- `POST /auth/register`, `POST /auth/login`, reset endpoints.
-- `GET /species`, `POST /species/{uuid}/unlock`
-- `POST /focus/sessions/start` → `{sessionUuid, speciesCode?, clientStartTime, plannedMinutes, tag?}`
-- `POST /focus/sessions/{sessionUuid}/end` → `{clientEndTime, state}` → awards `soft_currency` on success.
-- `GET /focus/sessions?limit&cursor`
-- `GET /wallet`, `GET /wallet/ledger?limit&cursor`
-
 ## Implementation Notes
 - **Time:** store UTC; use `Instant`.
 - **IDs:** client `sessionUuid` is idempotency key; validate UUID.
 - **Validation:** clamp to [5,120]; enforce drift tolerance of ±3 minutes (not persisted).
 - **Input Sanitization:** `speciesCode` accepts only alphanumeric + underscore; `tag` limited to alphanumeric + spaces (≤20 chars).
 - **Species Access:** enforce `enabled` flag and require unlock unless `defaultAvailable = true`.
-- **Auth:** JWT (short TTL), bcrypt/argon2id for passwords.
+- **Auth:** JWT (short TTL), Argon2 for passwords.
 - **Ledger:** every wallet mutation must include `reason` and reference (type+id).
 - **Migrations:** Flyway baseline + seeds for species; admin/test endpoints to grant `hard_currency`.
-- **Logging:** structured; include `sessionUuid`, `userId` in events.
+- **Logging:** structured; include `sessionUuid`, `userUuid` in events.
 - **Testing:** repository slice tests, MVC tests, and endpoint contract tests.
 
 ## Definition of Done

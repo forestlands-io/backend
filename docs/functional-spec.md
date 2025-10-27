@@ -1,6 +1,6 @@
 # Forestlands – Functional Specification (MVP: Focus Timer Only)
 
-_Last updated: 2025-10-24_
+_Last updated: 2025-10-27_
 
 ## 1) Overview
 
@@ -69,115 +69,16 @@ MVP is **backend-first** with a single Spring Boot service and MySQL. iOS and We
 - **Service:** single monolith.
 - **Time & IDs:** server times in UTC; client-provided UUIDs validated/stored.
 
-### 4.2 Persistence Model (MVP)
-- `user`
-    - `id` (PK, bigint), `uuid` (char(36), unique)
-    - `email` (unique), `password_hash`
-    - `created_at`, `updated_at`
-- `wallet`
-    - `id` (PK), `user_id` (FK)
-    - `soft_currency` (int), `hard_currency` (int)
-    - `updated_at`
-- `wallet_ledger`
-    - `id` (PK), `user_id` (FK)
-    - `delta_soft_currency` (int), `delta_hard_currency` (int)
-    - `reason` (varchar), `ref_type` (varchar), `ref_id` (bigint/uuid)
-    - `created_at`
-- `species`
-    - `id` (PK), `uuid` (char(36), unique), `code` (varchar, unique)
-    - `name` (varchar), `is_premium` (bool)
-    - `price` (int) — interpreted as **soft** if `is_premium=false` else **hard**
-    - `is_enabled` (bool), `default_available` (bool)
-    - `created_at`, `updated_at`
-- `user_species_unlock`
-    - `id` (PK), `user_id` (FK), `species_id` (FK)
-    - `unlocked_at` (datetime), `method` enum(`SOFT_CURRENCY`,`HARD_CURRENCY`,`ADMIN_GRANT`,`TEST_GRANT`)
-    - `price_paid` (int), `currency_type` enum(`SOFT`,`HARD`,`NONE`), `notes` (varchar, nullable)
-    - Unique `(user_id, species_id)`; index on `user_id`, `species_id`
-- `focus_session`
-    - `id` (PK), `uuid` (char(36), unique), `user_id` (FK), `species_id` (FK → `species.id`)
-    - `client_start_time`, `client_end_time`
-    - `server_start_time`, `server_end_time`
-    - `state` enum(`CREATED`,`SUCCESS`,`INTERRUPTED`)
-    - `tag` (varchar(20), nullable)
-    - `planned_minutes` (int, nullable)
-    - `duration_minutes` (int) — validated server-side (clamped on success)
-    - `flags_json` (json) — anomaly notes (e.g., drift alerts)
-    - `created_at`, `updated_at`
-
----
-
-## 5) API (MVP)
+### 4.2 API (MVP)
 
 Base URL: `/api/v1`  
 Auth: Bearer JWT (email/password login to obtain token).  
 All timestamps are **ISO-8601 UTC**.
 
-### 5.1 Auth
-- `POST /auth/register`
-    - body: `{ "email": "...", "password": "..." }`
-    - 201 → `{ "userId": 123, "userUuid": "..." }`
-- `POST /auth/login`
-    - body: `{ "email": "...", "password": "..." }`
-    - 200 → `{ "accessToken": "..." }`
-- `POST /auth/request-password-reset`
-- `POST /auth/reset-password`
-
-### 5.2 Species
-- `GET /species`
-    - 200 → list of `{ "uuid", "name", "isPremium", "price", "isEnabled", "unlocked" }`
-- `POST /species/{speciesUuid}/unlock`
-    - Validates currency based on `isPremium`.
-    - Deducts from wallet with ledger entry.
-    - 200 → `{ "unlocked": true, "wallet": { "soft_currency": 123, "hard_currency": 0 } }`
-
-### 5.3 Focus Sessions
-- `POST /focus/sessions/start`
-    - body:
-      ```json
-      {
-        "sessionUuid": "...",
-        "speciesCode": "red_cherry_2",
-        "clientStartTime": "2025-10-24T10:00:00Z",
-        "plannedMinutes": 25,
-        "tag": "Deep Work"
-      }
-      ```
-    - Rules:
-        - `plannedMinutes` 10–120 (UI may step 5).
-        - `speciesCode` optional; when present must match `[A-Za-z0-9_]+` and refer to an enabled species unlocked by the user (unless `default_available`).
-        - `tag` optional; when present must match `[A-Za-z0-9 ]+` (max 20 chars).
-        - Species must be unlocked or default-available.
-    - 201 → `{ "id": 456, "serverStartTime": "..." }`
-- `POST /focus/sessions/{sessionUuid}/end`
-    - body: `{ "clientEndTime": "2025-10-24T10:25:00Z", "state": "SUCCESS" }`
-    - Server stamps `serverEndTime`, validates duration & drift:
-        - Min 5, max 120, drift ±3 min.
-    - On `SUCCESS`:
-        - Award `"soft_currency_awarded" = validatedMinutes`.
-        - Ledger entry with `reason = "FOCUS_REWARD"`, `ref_type = "FOCUS_SESSION"`, `ref_id = focus_session.id`.
-    - 200 →
-      ```json
-      {
-        "state": "SUCCESS",
-        "validatedMinutes": 25,
-        "soft_currency_awarded": 25,
-        "wallet": { "soft_currency": 123, "hard_currency": 0 },
-        "anomalies": ["DRIFT_2M"]
-      }
-      ```
-- `GET /focus/sessions?limit=...&cursor=...`
-    - Paged list for history & reporting.
-
-### 5.4 Wallet
-- `GET /wallet`
-    - 200 → `{ "soft_currency": 123, "hard_currency": 0 }`
-- `GET /wallet/ledger?limit=...&cursor=...`
-    - 200 → list of entries with reason, deltas, refs.
 
 ---
 
-## 6) Validation & Edge Cases
+## 5) Validation & Edge Cases
 
 - **Drift calculation:** compare (`clientEnd - clientStart`) vs (`serverEnd - serverStart`). Accept within ±3 minutes. Use the **server** interval for reward, clamped to [5, 120].
 - **Overlapping sessions:** allowed; server does not reject.
@@ -187,7 +88,7 @@ All timestamps are **ISO-8601 UTC**.
 
 ---
 
-## 7) Seed Data (Flyway)
+## 6) Seed Data (inserted manually)
 
 - Default species (enabled): e.g., `Oak`, `Pine`, `Birch`.
 - Unlockable species: e.g., `Maple`, `Cherry`, `Cypress` with `price` interpreted by `is_premium`.
@@ -195,9 +96,9 @@ All timestamps are **ISO-8601 UTC**.
 
 ---
 
-## 8) Security & Compliance
+## 7) Security & Compliance
 
-- Passwords hashed (bcrypt/argon2id).
+- Passwords hashed (Argon2).
 - JWT (short TTL).
 - Rate limiting on auth endpoints.
 - PII minimal: email only.
@@ -205,7 +106,7 @@ All timestamps are **ISO-8601 UTC**.
 
 ---
 
-## 9) Observability
+## 8) Observability
 
 - Structured logs for:
     - Focus validation (durations, drift, flags).
@@ -218,7 +119,7 @@ All timestamps are **ISO-8601 UTC**.
 
 ---
 
-## 10) Acceptance Criteria (MVP)
+## 9) Acceptance Criteria (MVP)
 
 - User can register, login, start/end focus sessions.
 - Success → `soft_currency_awarded = validated minutes`; failure → no award.
