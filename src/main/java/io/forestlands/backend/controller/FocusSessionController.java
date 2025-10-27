@@ -52,7 +52,6 @@ public class FocusSessionController {
 
             FocusSession session = result.session();
             StartFocusSessionResponse response = new StartFocusSessionResponse(
-                    session.getId(),
                     session.getUuid(),
                     session.getServerStartTime(),
                     session.getState()
