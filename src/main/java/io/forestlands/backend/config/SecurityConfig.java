@@ -27,7 +27,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .requestMatchers("/api/v1/users/login").permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().permitAll()) // allowing everything for now
+                        //.anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .formLogin(formLogin -> formLogin.disable());
         return http.build();
