@@ -1,4 +1,4 @@
-CREATE TABLE `user` (
+CREATE TABLE users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     creation_date DATETIME(6) NOT NULL,
     last_modified_date DATETIME(6),
@@ -32,7 +32,7 @@ CREATE TABLE wallet (
     soft_currency INT NOT NULL DEFAULT 0,
     hard_currency INT NOT NULL DEFAULT 0,
     CONSTRAINT uq_wallet_user_id UNIQUE (user_id),
-    CONSTRAINT fk_wallet_user FOREIGN KEY (user_id) REFERENCES `user` (id)
+    CONSTRAINT fk_wallet_user FOREIGN KEY (user_id) REFERENCES users (id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE wallet_ledger (
@@ -45,7 +45,7 @@ CREATE TABLE wallet_ledger (
     reason VARCHAR(50) NOT NULL,
     ref_type VARCHAR(50) NOT NULL,
     ref_id VARCHAR(100) NOT NULL,
-    CONSTRAINT fk_wallet_ledger_user FOREIGN KEY (user_id) REFERENCES `user` (id)
+    CONSTRAINT fk_wallet_ledger_user FOREIGN KEY (user_id) REFERENCES users (id)
 ) ENGINE=InnoDB;
 
 CREATE INDEX idx_wallet_ledger_user ON wallet_ledger (user_id);
@@ -67,7 +67,7 @@ CREATE TABLE focus_session (
     duration_minutes INT,
     flags_json TEXT,
     CONSTRAINT uq_focus_session_uuid UNIQUE (uuid),
-    CONSTRAINT fk_focus_session_user FOREIGN KEY (user_id) REFERENCES `user` (id),
+    CONSTRAINT fk_focus_session_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_focus_session_species FOREIGN KEY (species_id) REFERENCES species (id)
 ) ENGINE=InnoDB;
 
@@ -85,7 +85,7 @@ CREATE TABLE user_species_unlock (
     price_paid INT NOT NULL,
     currency_type VARCHAR(10) NOT NULL,
     notes VARCHAR(255),
-    CONSTRAINT fk_user_species_unlock_user FOREIGN KEY (user_id) REFERENCES `user` (id),
+    CONSTRAINT fk_user_species_unlock_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_user_species_unlock_species FOREIGN KEY (species_id) REFERENCES species (id),
     CONSTRAINT uq_user_species_unlock UNIQUE (user_id, species_id)
 ) ENGINE=InnoDB;
