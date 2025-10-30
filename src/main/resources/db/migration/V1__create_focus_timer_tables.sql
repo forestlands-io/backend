@@ -19,6 +19,7 @@ CREATE TABLE species (
     is_premium TINYINT(1) NOT NULL,
     price INT NOT NULL,
     is_enabled TINYINT(1) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
     default_available TINYINT(1) NOT NULL DEFAULT 0,
     CONSTRAINT uq_species_uuid UNIQUE (uuid),
     CONSTRAINT uq_species_code UNIQUE (code)

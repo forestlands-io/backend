@@ -10,5 +10,7 @@ public interface SpeciesRepository extends JpaRepository<Species, Long> {
 
     Optional<Species> findByCode(String speciesCode);
 
-    List<Species> findAllByEnabledTrueOrderByNameAsc();
+    List<Species> findAllByEnabledTrueOrderBySortOrderAscNameAsc();
+
+    List<Species> findAllByOrderBySortOrderAscNameAsc();
 }

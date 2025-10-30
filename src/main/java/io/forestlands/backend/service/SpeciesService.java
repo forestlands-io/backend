@@ -20,7 +20,15 @@ public class SpeciesService {
 
     @Transactional(readOnly = true)
     public List<Species> listEnabledSpecies() {
-        return speciesRepository.findAllByEnabledTrueOrderByNameAsc();
+        return listSpecies(false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Species> listSpecies(boolean includeDisabled) {
+        if (includeDisabled) {
+            return speciesRepository.findAllByOrderBySortOrderAscNameAsc();
+        }
+        return speciesRepository.findAllByEnabledTrueOrderBySortOrderAscNameAsc();
     }
 
     @Transactional(readOnly = true)

@@ -31,19 +31,20 @@ public class DatabaseInitializer implements CommandLineRunner {
 
         LOGGER.info("Initializing database");
         userService.createUser("user@mail.com", "123");
-        createSpecies("cherry", "Cherry", false, 100);
-        createSpecies("oak", "Oak", false, 200);
-        createSpecies("rose", "Rose", true, 5);
+        createSpecies("cherry", "Cherry", false, 100, 10);
+        createSpecies("oak", "Oak", false, 200, 20);
+        createSpecies("rose", "Rose", true, 5, 30);
         LOGGER.info("Done initializing database");
         // System.exit(0);
     }
 
-    private Species createSpecies(String code, String name, boolean premium, int price) {
+    private Species createSpecies(String code, String name, boolean premium, int price, int sortOrder) {
         Species species = new Species();
         species.setCode(code);
         species.setName(name);
         species.setPremium(premium);
         species.setPrice(price);
+        species.setSortOrder(sortOrder);
         return speciesService.save(species);
     }
 }

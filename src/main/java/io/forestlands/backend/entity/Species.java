@@ -31,6 +31,9 @@ public class Species extends BaseEntity {
     @Column(name = "is_enabled", nullable = false)
     private boolean enabled = true;
 
+    @Column(name = "sort_order", nullable = false)
+    private int sortOrder = 0;
+
     @Column(name = "default_available", nullable = false)
     private boolean defaultAvailable = false;
 
@@ -88,5 +91,13 @@ public class Species extends BaseEntity {
 
     public void setDefaultAvailable(boolean defaultAvailable) {
         this.defaultAvailable = defaultAvailable;
+    }
+
+    public int getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(int sortOrder) {
+        this.sortOrder = sortOrder;
     }
 }

@@ -111,6 +111,37 @@
           }
         }
       }
+    },
+    "/api/v1/species": {
+      "get": {
+        "tags": [
+          "species-controller"
+        ],
+        "operationId": "listSpecies",
+        "parameters": [
+          {
+            "name": "includeDisabled",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeciesListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -252,6 +283,46 @@
               "SUCCESS",
               "INTERRUPTED"
             ]
+          }
+        }
+      },
+      "SpeciesItem": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isPremium": {
+            "type": "boolean"
+          },
+          "price": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SpeciesListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpeciesItem"
+            }
           }
         }
       }
