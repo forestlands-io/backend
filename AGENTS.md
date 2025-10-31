@@ -9,7 +9,7 @@ Implement and evolve the **Forestlands** backend according to the functional spe
 **Primary sources of truth (read first):**
 - `/docs/functional-spec.md` - user-facing requirements (MVP vs post-MVP).
 - `/docs/agents-context.md` - condensed, always-current summary for agents (entities, rules).
-- `/docs/openapi.json` - current API spec, will be shared with frontend
+- `/docs/openapi.json` - current API spec, will be shared with frontend. Periodically manually updated by user.
 - `/README.md` - setup and dev conventions.
 
 > If these documents disagree, prefer `/docs/functional-spec.md`. Propose a fix via PR that updates both files consistently.
