@@ -1,13 +1,12 @@
 package io.forestlands.backend.controller;
 
-import io.forestlands.backend.controller.dto.LoginRequest;
-import io.forestlands.backend.controller.dto.LoginResponse;
-import io.forestlands.backend.entity.User;
+import io.forestlands.backend.security.JwtUserUtils;
 import io.forestlands.backend.service.UserService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -20,21 +19,9 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public String me() {
+    public String me(@AuthenticationPrincipal Jwt jwt) {
+        String userEmail = JwtUserUtils.getEmailFromToken(jwt);
+        String userUuid  = JwtUserUtils.getUuidFromToken(jwt);
         return "ok";
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest body) {
-        User user = userService
-                .findByEmail(body.email())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
-
-        if (!userService.matchesPassword(user, body.password())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
-        }
-
-        LoginResponse response = new LoginResponse(user.getUuid(), user.getEmail());
-        return ResponseEntity.ok(response);
     }
 }
