@@ -24,8 +24,12 @@ MVP is **backend-first** with a single Spring Boot service and MySQL. iOS and We
 - **Species**
     - 3–5 default species + 3–5 unlockable (seeded via migration).
     - Each session is tied to a chosen species (must be unlocked/available).
+- **Tree Inventory (backend tracking only)**
+    - Every successful session now mints a tree of the chosen species into the user's inventory.
+    - Inventory entries record placement status plus optional area-map coordinates for future features.
+    - Users can fetch their current trees via `GET /api/v1/inventory/trees`.
 
-> **Out of scope in this MVP:** inventory, map, placement, biomes, buildings, social, enforcement, purchases.
+> **Out of scope in this MVP:** map UI, placement UX, biomes, buildings, social, enforcement, purchases. Inventory is tracked server-side only.
 
 ---
 
@@ -59,6 +63,12 @@ MVP is **backend-first** with a single Spring Boot service and MySQL. iOS and We
     - Non-premium: cost in **soft_currency**.
     - Premium: cost in **hard_currency**.
     - Unlock is **permanent** for the user.
+
+### 3.3 Tree Inventory
+- Schema: `user_id`, `species_id`, `is_placed`, `cell_x`, `cell_y` (nullable) plus audit columns.
+- When a focus session ends in `SUCCESS`, award **one** tree for the chosen species and mark it as unplaced (`is_placed = false`).
+- Trees can later be placed onto the area map; once `is_placed = true` the record becomes immutable (no moving/removing in MVP).
+- Placement coordinates (`cell_x`, `cell_y`) remain `NULL` until the user places the tree.
 
 ---
 

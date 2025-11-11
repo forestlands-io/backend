@@ -93,3 +93,20 @@ CREATE TABLE user_species_unlock (
 
 CREATE INDEX idx_user_species_unlock_user ON user_species_unlock (user_id);
 CREATE INDEX idx_user_species_unlock_species ON user_species_unlock (species_id);
+
+CREATE TABLE tree_inventory (
+                                id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                creation_date DATETIME(6) NOT NULL,
+                                last_modified_date DATETIME(6),
+                                user_id BIGINT NOT NULL,
+                                species_id BIGINT NOT NULL,
+                                is_placed TINYINT(1) NOT NULL DEFAULT 0,
+                                cell_x INT,
+                                cell_y INT,
+                                CONSTRAINT fk_tree_inventory_user FOREIGN KEY (user_id) REFERENCES users (id),
+                                CONSTRAINT fk_tree_inventory_species FOREIGN KEY (species_id) REFERENCES species (id)
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_tree_inventory_user ON tree_inventory (user_id);
+CREATE INDEX idx_tree_inventory_species ON tree_inventory (species_id);
+CREATE INDEX idx_tree_inventory_user_species ON tree_inventory (user_id, species_id);

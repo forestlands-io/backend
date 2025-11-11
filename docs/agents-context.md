@@ -6,7 +6,7 @@ Implement a clean, testable Spring Boot 3 + MySQL 8 backend that powers:
 2) Simple economy with two balances: `soft_currency` and `hard_currency`.
 3) Species listing & permanent unlocks.
 
-> **Out of scope for now:** inventory and map (remove completely), purchases, enforcement, social.
+> **Out of scope for now:** map placement/UI (frontend), purchases, enforcement, social. Inventory storage exists server-side only for future map work.
 
 ## Service Coordinates
 - Group: `io.forestlands`
@@ -19,6 +19,7 @@ Implement a clean, testable Spring Boot 3 + MySQL 8 backend that powers:
 - Drift tolerance: **±3 minutes** between client and server intervals.
 - Overlapping sessions: **allowed**.
 - Rewards on `SUCCESS`: **`soft_currency` = validated minutes** (use server diff; clamp bounds).
+- Successful sessions also mint a tree inventory entry for the chosen species (starts as unplaced).
 - Species unlocks are **permanent**; price interpreted by `is_premium`:
     - if `false` → cost in `soft_currency`
     - if `true` → cost in `hard_currency`
@@ -31,6 +32,8 @@ Implement a clean, testable Spring Boot 3 + MySQL 8 backend that powers:
 - **Species Access:** enforce `enabled` flag and require unlock unless `defaultAvailable = true`.
 - **Auth:** JWT (short TTL), Argon2 for passwords.
 - **Ledger:** every wallet mutation must include `reason` and reference (type+id).
+- **Tree Inventory:** table captures `user_id`, `species_id`, `is_placed`, `cell_x`, `cell_y`. Placement remains immutable once set.
+- **API:** `/api/v1/inventory/trees` returns the authenticated user's tree inventory (species metadata + placement info).
 - **Migrations:** Flyway baseline + seeds for species; admin/test endpoints to grant `hard_currency`.
 - **Logging:** structured; include `sessionUuid`, `userUuid` in events.
 - **Testing:** repository slice tests, MVC tests, and endpoint contract tests.

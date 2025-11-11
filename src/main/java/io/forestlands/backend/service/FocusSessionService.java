@@ -27,6 +27,7 @@ public class FocusSessionService {
     private final WalletService walletService;
     private final WalletLedgerService walletLedgerService;
     private final UserSpeciesUnlockService userSpeciesUnlockService;
+    private final TreeInventoryService treeInventoryService;
     private final ObjectMapper objectMapper;
 
     public FocusSessionService(FocusSessionRepository focusSessionRepository,
@@ -34,12 +35,14 @@ public class FocusSessionService {
                                WalletService walletService,
                                WalletLedgerService walletLedgerService,
                                UserSpeciesUnlockService userSpeciesUnlockService,
+                               TreeInventoryService treeInventoryService,
                                ObjectMapper objectMapper) {
         this.focusSessionRepository = focusSessionRepository;
         this.speciesService = speciesService;
         this.walletService = walletService;
         this.walletLedgerService = walletLedgerService;
         this.userSpeciesUnlockService = userSpeciesUnlockService;
+        this.treeInventoryService = treeInventoryService;
         this.objectMapper = objectMapper;
     }
 
@@ -187,6 +190,9 @@ public class FocusSessionService {
                     "FOCUS_SESSION",
                     session.getUuid().toString()
             );
+            if (session.getSpecies() != null) {
+                treeInventoryService.addTreeToInventory(user, session.getSpecies());
+            }
         } else {
             wallet = walletService.getOrCreate(user);
         }
