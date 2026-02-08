@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -91,10 +92,21 @@ public class FocusSessionController {
     }
 
     private User resolveUser(Authentication authentication) {
-        String email = authentication.getName();
+        String email = extractEmail(authentication);
         return userService
                 .findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+    }
+
+    private String extractEmail(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Jwt jwt) {
+            String jwtEmail = jwt.getClaimAsString("email");
+            if (jwtEmail != null && !jwtEmail.isBlank()) {
+                return jwtEmail;
+            }
+        }
+        return authentication.getName();
     }
 
     private ResponseStatusException mapException(RuntimeException ex) {
