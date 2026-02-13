@@ -61,31 +61,41 @@ public class FocusSessionService {
                                                 Instant clientStartTime,
                                                 Integer plannedMinutes,
                                                 String tag) {
+        LOGGER.info("Got request to start focus session for user {} with sessionUuid {}", user.getUuid(), sessionUuid);
         if (sessionUuid == null) {
+            LOGGER.warn("Got request to start focus session for user {} with null sessionUuid", user.getUuid());
             throw new IllegalArgumentException("sessionUuid is required");
         }
         if (clientStartTime == null) {
+            LOGGER.warn("Got request to start focus session for user {} with null clientStartTime", user.getUuid());
             throw new IllegalArgumentException("clientStartTime is required");
         }
         if (plannedMinutes != null && (plannedMinutes < 5 || plannedMinutes > 120)) {
+            LOGGER.warn("Got request to start focus session for user {} with invalid plannedMinutes: {}", user.getUuid(), plannedMinutes);
             throw new IllegalArgumentException("plannedMinutes must be between 5 and 120");
         }
 
         Optional<FocusSession> existing = focusSessionRepository.findByUuidAndUser(sessionUuid, user);
         if (existing.isPresent()) {
+            LOGGER.info("Session {} already exists for user {}", sessionUuid, user.getUuid());
             return new FocusSessionStartResult(existing.get(), false);
         }
 
         focusSessionRepository.findByUuid(sessionUuid).ifPresent(other -> {
+            LOGGER.warn("Session UUID {} already in use by another user", sessionUuid);
             throw new IllegalArgumentException("Session UUID already in use");
         });
 
         Species species = null;
         if (speciesCode != null) {
-            species = speciesService
-                    .findByCode(speciesCode)
-                    .orElseThrow(() -> new IllegalArgumentException("Species not found"));
+            Optional<Species> speciesOptional = speciesService.findByCode(speciesCode);
+            if (speciesOptional.isEmpty()) {
+                LOGGER.warn("Species not found for code {}", speciesCode);
+                throw new IllegalArgumentException("Species not found");
+            }
+            species = speciesOptional.get();
             if (!userSpeciesUnlockService.isSpeciesUsable(user, species)) {
+                LOGGER.warn("User {} tries to start focus session with species {}, but it's not available to user", user.getUuid(), speciesCode);
                 throw new IllegalArgumentException("Species is not available to this user");
             }
         }
@@ -164,7 +174,6 @@ public class FocusSessionService {
             if (drift > 3) {
                 LOGGER.warn("Session drift ({}) exceeds tolerance for session {}", drift, sessionUuid);
                 anomalies.add("DRIFT_EXCEEDS_TOLERANCE");
-                // throw new IllegalArgumentException("Session drift exceeds tolerance");
             }
             if (serverDurationMinutes > 120) {
                 anomalies.add("SERVER_DURATION_CLAMPED");
@@ -196,12 +205,11 @@ public class FocusSessionService {
         Wallet wallet = null;
         int softAwarded = 0;
         if (newState == FocusSessionState.SUCCESS) {
-            int rewardMinutes = session.getDurationMinutes();
-            softAwarded = rewardMinutes;
-            wallet = walletService.adjustBalance(user, rewardMinutes, 0);
+            softAwarded = calculateReward(session);
+            wallet = walletService.adjustBalance(user, softAwarded, 0);
             walletLedgerService.recordEntry(
                     user,
-                    rewardMinutes,
+                    softAwarded,
                     0,
                     "FOCUS_REWARD",
                     "FOCUS_SESSION",
@@ -221,6 +229,10 @@ public class FocusSessionService {
                 softAwarded,
                 wallet
         );
+    }
+
+    private int calculateReward(FocusSession session) {
+        return session.getDurationMinutes();
     }
 
     private String writeFlags(List<String> anomalies) {
