@@ -9,6 +9,7 @@ import java.util.UUID;
 public record UserMeResponse(
         List<SessionItem> sessions,
         List<InventoryItem> inventory,
+        List<String> unlockedSpeciesCodes,
         WalletSummary wallet
 ) {
     public record SessionItem(

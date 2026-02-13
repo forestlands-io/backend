@@ -9,6 +9,7 @@ import io.forestlands.backend.entity.Wallet;
 import io.forestlands.backend.service.FocusSessionService;
 import io.forestlands.backend.service.TreeInventoryService;
 import io.forestlands.backend.service.UserService;
+import io.forestlands.backend.service.UserSpeciesUnlockService;
 import io.forestlands.backend.service.WalletService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,9 @@ class UserControllerTest {
     @MockBean
     private WalletService walletService;
 
+    @MockBean
+    private UserSpeciesUnlockService userSpeciesUnlockService;
+
     @Test
     @WithMockUser(username = "user@example.com")
     void meReturnsSessionsInventoryAndWallet() throws Exception {
@@ -81,6 +85,7 @@ class UserControllerTest {
         wallet.setSoftCurrency(42);
         wallet.setHardCurrency(3);
         when(walletService.getOrCreate(user)).thenReturn(wallet);
+        when(userSpeciesUnlockService.listUnlockedSpecies(user)).thenReturn(List.of(species));
 
         mockMvc.perform(get("/api/v1/users/me"))
                 .andExpect(status().isOk())
@@ -89,6 +94,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.sessions[0].plannedMinutes").value(25))
                 .andExpect(jsonPath("$.inventory[0].id").value(7))
                 .andExpect(jsonPath("$.inventory[0].speciesCode").value("oak"))
+                .andExpect(jsonPath("$.unlockedSpeciesCodes[0]").value("oak"))
                 .andExpect(jsonPath("$.wallet.softCurrency").value(42))
                 .andExpect(jsonPath("$.wallet.hardCurrency").value(3));
     }
@@ -107,6 +113,7 @@ class UserControllerTest {
         wallet.setSoftCurrency(0);
         wallet.setHardCurrency(0);
         when(walletService.getOrCreate(user)).thenReturn(wallet);
+        when(userSpeciesUnlockService.listUnlockedSpecies(user)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/users/me")
                         .with(jwt().jwt(jwt -> jwt.subject("936f44f7-ae6e-4802-949e-a461e65a05b7")
@@ -114,6 +121,7 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sessions").isArray())
                 .andExpect(jsonPath("$.inventory").isArray())
+                .andExpect(jsonPath("$.unlockedSpeciesCodes").isArray())
                 .andExpect(jsonPath("$.wallet.softCurrency").value(0))
                 .andExpect(jsonPath("$.wallet.hardCurrency").value(0));
     }

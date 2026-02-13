@@ -7,6 +7,7 @@ import io.forestlands.backend.entity.User;
 import io.forestlands.backend.entity.Wallet;
 import io.forestlands.backend.service.FocusSessionService;
 import io.forestlands.backend.service.TreeInventoryService;
+import io.forestlands.backend.service.UserSpeciesUnlockService;
 import io.forestlands.backend.service.UserService;
 import io.forestlands.backend.service.WalletService;
 import org.springframework.http.ResponseEntity;
@@ -29,15 +30,18 @@ public class UserController {
     private final FocusSessionService focusSessionService;
     private final TreeInventoryService treeInventoryService;
     private final WalletService walletService;
+    private final UserSpeciesUnlockService userSpeciesUnlockService;
 
     public UserController(UserService userService,
                           FocusSessionService focusSessionService,
                           TreeInventoryService treeInventoryService,
-                          WalletService walletService) {
+                          WalletService walletService,
+                          UserSpeciesUnlockService userSpeciesUnlockService) {
         this.userService = userService;
         this.focusSessionService = focusSessionService;
         this.treeInventoryService = treeInventoryService;
         this.walletService = walletService;
+        this.userSpeciesUnlockService = userSpeciesUnlockService;
     }
 
     @GetMapping("/me")
@@ -54,11 +58,17 @@ public class UserController {
                 .map(this::mapInventory)
                 .toList();
 
+        List<String> unlockedSpeciesCodes = userSpeciesUnlockService.listUnlockedSpecies(user)
+                .stream()
+                .map(species -> species.getCode())
+                .toList();
+
         Wallet wallet = walletService.getOrCreate(user);
 
         UserMeResponse response = new UserMeResponse(
                 sessions,
                 inventory,
+                unlockedSpeciesCodes,
                 new UserMeResponse.WalletSummary(wallet.getSoftCurrency(), wallet.getHardCurrency())
         );
         return ResponseEntity.ok(response);
