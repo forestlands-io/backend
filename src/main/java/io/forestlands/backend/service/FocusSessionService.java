@@ -2,19 +2,16 @@ package io.forestlands.backend.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.forestlands.backend.entity.FocusSession;
-import io.forestlands.backend.entity.FocusSessionState;
-import io.forestlands.backend.entity.Species;
-import io.forestlands.backend.entity.User;
-import io.forestlands.backend.entity.Wallet;
+import io.forestlands.backend.entity.*;
 import io.forestlands.backend.repository.FocusSessionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +19,7 @@ import java.util.UUID;
 @Service
 public class FocusSessionService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(FocusSessionService.class);
     private final FocusSessionRepository focusSessionRepository;
     private final SpeciesService speciesService;
     private final WalletService walletService;
@@ -160,16 +158,35 @@ public class FocusSessionService {
 
         if (newState == FocusSessionState.SUCCESS) {
             if (serverDurationMinutes < 5) {
-                throw new IllegalArgumentException("Session shorter than minimum duration");
+                LOGGER.warn("Server duration ({}) is shorter than minimum duration (5m) for session {}", serverDurationMinutes, sessionUuid);
+                throw new IllegalArgumentException("Server session shorter than minimum duration");
             }
             if (drift > 3) {
-                throw new IllegalArgumentException("Session drift exceeds tolerance");
+                LOGGER.warn("Session drift ({}) exceeds tolerance for session {}", drift, sessionUuid);
+                anomalies.add("DRIFT_EXCEEDS_TOLERANCE");
+                // throw new IllegalArgumentException("Session drift exceeds tolerance");
             }
             if (serverDurationMinutes > 120) {
                 anomalies.add("SERVER_DURATION_CLAMPED");
+                LOGGER.info("Server duration ({}) exceeds maximum duration (120m) for session {}", serverDurationMinutes, sessionUuid);
+            }
+            if (session.getPlannedMinutes() != null) {
+                if (session.getPlannedMinutes() < 5 || session.getPlannedMinutes() > 120) {
+                    anomalies.add("PLANNED_DURATION_INVALID");
+                    LOGGER.warn("Invalid planned duration ({}) for session {}", session.getPlannedMinutes(), sessionUuid);
+                }
+            } else {
+                anomalies.add("NO_PLANNED_DURATION");
+                LOGGER.warn("No planned duration for session {}", sessionUuid);
             }
             int validatedMinutes = (int) Math.min(Math.max(serverDurationMinutes, 5), 120);
-            session.setDurationMinutes(validatedMinutes);
+            if (session.getPlannedMinutes() != null) {
+                LOGGER.info("Setting actual duration to planned duration ({}m) for session {}", validatedMinutes, sessionUuid);
+                session.setDurationMinutes(session.getPlannedMinutes());
+            } else {
+                LOGGER.warn("No planned duration for session {}, using actual duration ({}) instead", sessionUuid, validatedMinutes);
+                session.setDurationMinutes(validatedMinutes);
+            }
         } else {
             session.setDurationMinutes((int) serverDurationMinutes);
         }
